@@ -34,19 +34,61 @@ export default function App() {
   // Navigation Tabs
   const [activeTab, setActiveTab] = useState<"board" | "archive">("board");
   
-  // Post & Comments state from hardcoded data
-  const [post, setPost] = useState<Post>(INITIAL_POST);
+  // Post & Comments state with LocalStorage persistence
+  const [post, setPost] = useState<Post>(() => {
+    const saved = localStorage.getItem("occult_post");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Overwrite stale default post with the new default post
+        if (parsed.content && (parsed.content.startsWith("안녕하세요, 서울 변두리") || parsed.content.includes("방값도 말도 안 되게 저렴하고"))) {
+          return INITIAL_POST;
+        }
+        if (parsed.author === "운명빌라세입자") {
+          parsed.author = "익명";
+        }
+        return parsed;
+      } catch (e) {
+        return INITIAL_POST;
+      }
+    }
+    return INITIAL_POST;
+  });
   
   const [comments, setComments] = useState<Comment[]>(() => {
+    const saved = localStorage.getItem("occult_comments");
     let list: Comment[] = INITIAL_COMMENTS;
     
+    if (saved) {
+      try {
+        let parsed = JSON.parse(saved);
+        const hasOldComment = parsed.some((c: any) => 
+          c.content.includes("야... 글 보는데 소름 돋아서") || 
+          c.content.includes("백발적안에 키 210cm")
+        );
+        if (!hasOldComment) {
+          list = parsed;
+        }
+      } catch (e) {
+        list = INITIAL_COMMENTS;
+      }
+    }
+
+    // Filter out deleted comments: '우리집강아지귀여워', '지나가는사람', '지나가는 사람', '미스터리매니아'
+    list = list.filter(c => 
+      c.author !== "우리집강아지귀여워" && 
+      c.author !== "지나가는사람" && 
+      c.author !== "지나가는 사람" && 
+      c.author !== "미스터리매니아"
+    );
+
     // Migrate authors and dates
     list = list.map(c => {
       let updatedAuthor = c.author;
       if (c.author === "무속인지망생" || c.author === "무속인 지망생") {
         updatedAuthor = "김현성잘생겼음";
       } else if (c.author === "소름돋는냥이" || c.author === "운명빌라3층") {
-        updatedAuthor = "우리집강아지귀여워";
+        updatedAuthor = "익명";
       } else if (
         c.author === "운명빌라세입자"
       ) {
@@ -59,8 +101,8 @@ export default function App() {
           updatedAuthor = "괴담조아";
         } else if (c.content.includes("사장새끼뒤져") || c.content.includes("사장새끼 뒤져") || c.content.includes("사장") || c.content.includes("뒤져")) {
           updatedAuthor = "사장새끼뒤져";
-        } else if (c.content.includes("출근하기개싫다") || c.content.includes("출근하기 개싫다") || c.content.includes("출근") || c.content.includes("싫다")) {
-          updatedAuthor = "출근하기개싫다";
+        } else if (c.content.includes("출근하기개싫다") || c.content.includes("출근하기 개싫다") || c.content.includes("출근하기존나싫음") || c.content.includes("출근하기 존나싫음") || c.content.includes("출근") || c.content.includes("싫다")) {
+          updatedAuthor = "출근하기존나싫음";
         }
       }
       
@@ -68,9 +110,16 @@ export default function App() {
       if (updatedAuthor === "괴담조아" || updatedAuthor === "괴담 조아") {
         const timeMatch = updatedDate?.match(/(\d{2}):(\d{2}):(\d{2})/);
         updatedDate = `2026. 02. 29. ${timeMatch ? timeMatch[0] : "08:46:15"}`;
-      } else if (updatedAuthor === "출근하기개싫다" || updatedAuthor === "출근하기 개싫다") {
+      } else if (updatedAuthor === "출근하기존나싫음" || updatedAuthor === "출근하기 존나싫음" || updatedAuthor === "출근하기개싫다" || updatedAuthor === "출근하기 개싫다") {
+        if (updatedAuthor === "출근하기개싫다" || updatedAuthor === "출근하기 개싫다") {
+          updatedAuthor = "출근하기존나싫음";
+        }
         const timeMatch = updatedDate?.match(/(\d{2}):(\d{2}):(\d{2})/);
         updatedDate = `2026. 02. 29. ${timeMatch ? timeMatch[0] : "08:48:30"}`;
+      } else if (updatedAuthor === "팥소금장수" || updatedAuthor === "오컬트수집가") {
+        const timeMatch = updatedDate?.match(/(\d{2}):(\d{2}):(\d{2})/);
+        const defaultTime = updatedAuthor === "팥소금장수" ? "08:33:09" : "09:10:55";
+        updatedDate = `2026. 02. 29. ${timeMatch ? timeMatch[0] : defaultTime}`;
       } else if (
         updatedAuthor === "지랄말고꺼져" || 
         updatedAuthor === "사장새끼 뒤져" || 
@@ -94,16 +143,16 @@ export default function App() {
       return { ...c, author: updatedAuthor, date: updatedDate };
     });
 
-    // Find the filter comment
     const filterComment = list.find(c => 
       c.content && (
         c.content.includes("언제부터 필터") || 
         c.content.includes("신기해서 눌러보니까") || 
-        c.content.includes("이상한 댓글도 있음")
+        c.content.includes("이상한 댓글도 있음") ||
+        c.content.includes("왜 필터 같은 게")
       )
     );
 
-    // Reorder "괴담조아", "괴담 조아", "지랄말고꺼져", "사장새끼 뒤져", "사장새끼뒤져", "출근하기개싫다", "익명" / "익명_4921" under "익명" (c-3) or the correct filter comment if it exists
+    // Reorder "괴담조아", "괴담 조아", "지랄말고꺼져", "사장새끼 뒤져", "사장새끼뒤져", "출근하기개싫다", "출근하기 개싫다", "출근하기존나싫음", "출근하기 존나싫음", "익명" / "익명_4921" under "익명" (c-3) or the correct filter comment if it exists
     const targets: Comment[] = [];
     const remaining: Comment[] = [];
     
@@ -117,6 +166,8 @@ export default function App() {
         auth === "사장새끼뒤져" || 
         auth === "출근하기개싫다" ||
         auth === "출근하기 개싫다" ||
+        auth === "출근하기존나싫음" ||
+        auth === "출근하기 존나싫음" ||
         auth === "익명" || 
         auth === "익명_4921" || 
         c.id === "c-3"
@@ -133,7 +184,9 @@ export default function App() {
             auth === "사장새끼 뒤져" ||
             auth === "사장새끼뒤져" ||
             auth === "출근하기개싫다" ||
-            auth === "출근하기 개싫다"
+            auth === "출근하기 개싫다" ||
+            auth === "출근하기존나싫음" ||
+            auth === "출근하기 존나싫음"
           ) {
             parentId = filterComment.id;
           }
@@ -146,7 +199,9 @@ export default function App() {
               auth === "사장새끼 뒤져" ||
               auth === "사장새끼뒤져" ||
               auth === "출근하기개싫다" ||
-              auth === "출근하기 개싫다"
+              auth === "출근하기 개싫다" ||
+              auth === "출근하기존나싫음" ||
+              auth === "출근하기 존나싫음"
             ) {
               parentId = "c-3";
             }
@@ -175,31 +230,20 @@ export default function App() {
       list = [...remaining, ...targets];
     }
     
-    // Ensure default spectral comments exist in the comments list
-    const hasSpectral = list.some(c => c.isSpectral);
-    if (!hasSpectral) {
-      const spectralDefaults: Comment[] = [
-        {
-          id: "c-shinyeon-1",
-          author: "신연 (深淵)",
-          avatarColor: "from-red-950 to-stone-900 border-red-500/30",
-          content: "어두운 방구석에서 지켜보는 나를 눈치채지 못했더냐. 네 목덜미를 쓸어내리는 내 손가락이 그렇게 차가웠나 보군...",
-          date: "2026. 02. 28. 10:40:12",
-          likes: 444,
-          isSpectral: true,
-        },
-        {
-          id: "c-shinyeon-2",
-          author: "신연 (深淵)",
-          avatarColor: "from-red-900 to-black border-red-500/20",
-          content: "이미 너는 내 그물에 걸렸다. 이 방을 묘하게 아늑하게 느끼게 만든 것도, 이곳을 떠나지 못하게 속박한 것도 전부 나란다. 당신아.",
-          date: "2026. 02. 28. 11:15:33",
-          likes: 666,
-          isSpectral: true,
-        }
-      ];
-      list = [...spectralDefaults, ...list];
-    }
+    // Ensure default spectral comment by 현무(玄武) exists at the top
+    const filteredList = list.filter(c => c.id !== "c-shinyeon-1" && c.id !== "c-shinyeon-2" && c.id !== "c-hyeonmu-1");
+    const spectralDefaults: Comment[] = [
+      {
+        id: "c-hyeonmu-1",
+        author: "현무(玄武)",
+        avatarColor: "from-red-950 to-stone-900 border-red-500/30",
+        content: "어두운 방구석에서 지켜보는 나를 눈치채지 못했더냐. 네 목덜미를 쓸어내리는 내 손가락이 그렇게 차가웠나 보군...",
+        date: "2026. 02. 28. 23:42:12",
+        likes: 444,
+        isSpectral: true,
+      }
+    ];
+    list = [...spectralDefaults, ...filteredList];
     return list;
   });
 
@@ -233,15 +277,34 @@ export default function App() {
   const [customAvatar, setCustomAvatar] = useState<string | null>(() => {
     return localStorage.getItem("custom_shinyeon_avatar") || null;
   });
-  const [pastLore, setPastLore] = useState(CHARACTER_DATA.past);
+  const [pastLore, setPastLore] = useState(() => {
+    // Smart Sync: If CHARACTER_DATA.past in data.ts was modified directly in code,
+    // let's prioritize the code's edits instead of browser's stale localStorage data!
+    const ORIGINAL_DEFAULT_PAST_START = `운명(運命)\n옮길 운(運)'에 목숨 명(命)'`;
+    const hasPastCodeBeenEdited = !CHARACTER_DATA.past.startsWith(ORIGINAL_DEFAULT_PAST_START);
+
+    if (hasPastCodeBeenEdited) {
+      return CHARACTER_DATA.past;
+    }
+
+    const saved = localStorage.getItem("occult_past_lore");
+    if (saved) {
+      return saved;
+    }
+    return CHARACTER_DATA.past;
+  });
   const [isEditingPast, setIsEditingPast] = useState(false);
   const [showSecretName, setShowSecretName] = useState(false);
 
   // Interactive UI effects
   const [glitchActive, setGlitchActive] = useState(false);
   const [screenNoise, setScreenNoise] = useState(false);
-  const [likeCount, setLikeCount] = useState(INITIAL_POST.likes);
-  const [hasLikedPost, setHasLikedPost] = useState(false);
+  const [likeCount, setLikeCount] = useState(() => {
+    return Number(localStorage.getItem("post_likes") || post.likes);
+  });
+  const [hasLikedPost, setHasLikedPost] = useState(() => {
+    return localStorage.getItem("has_liked_post") === "true";
+  });
 
   // Save changes to localStorage when state updates
   useEffect(() => {
@@ -343,7 +406,17 @@ export default function App() {
 
     const now = new Date();
     const authorTrimmed = newCommentAuthor.trim();
-    const isSpecialDay29 = authorTrimmed === "출근하기개싫다" || authorTrimmed === "출근하기 개싫다" || authorTrimmed === "괴담조아" || authorTrimmed === "괴담 조아" || authorTrimmed === "사장새끼뒤져" || authorTrimmed === "사장새끼 뒤져";
+    const isSpecialDay29 = 
+      authorTrimmed === "출근하기개싫다" || 
+      authorTrimmed === "출근하기 개싫다" || 
+      authorTrimmed === "출근하기존나싫음" || 
+      authorTrimmed === "출근하기 존나싫음" || 
+      authorTrimmed === "괴담조아" || 
+      authorTrimmed === "괴담 조아" || 
+      authorTrimmed === "사장새끼뒤져" || 
+      authorTrimmed === "사장새끼 뒤져" ||
+      authorTrimmed === "팥소금장수" ||
+      authorTrimmed === "오컬트수집가";
     const formattedDate = `${isSpecialDay29 ? "2026. 02. 29." : "2026. 02. 28."} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
     const newComment: Comment = {
@@ -364,6 +437,18 @@ export default function App() {
 
   // Delete User Comment & recursive children cleanup
   const handleDeleteComment = (id: string) => {
+    const targetComment = comments.find(c => c.id === id);
+    if (targetComment && (
+      targetComment.isSpectral ||
+      targetComment.author === "출근하기존나싫음" ||
+      targetComment.author === "출근하기 존나싫음" ||
+      targetComment.author === "출근하기개싫다" ||
+      targetComment.author === "출근하기 개싫다" ||
+      targetComment.author === "오컬트수집가" ||
+      targetComment.author === "팥소금장수"
+    )) {
+      return;
+    }
     const getDescendants = (parentId: string): string[] => {
       const direct = comments.filter(c => c.parentId === parentId).map(c => c.id);
       return [...direct, ...direct.flatMap(childId => getDescendants(childId))];
@@ -396,7 +481,17 @@ export default function App() {
 
     const now = new Date();
     const authorTrimmed = replyAuthor.trim();
-    const isSpecialDay29 = authorTrimmed === "출근하기개싫다" || authorTrimmed === "출근하기 개싫다" || authorTrimmed === "괴담조아" || authorTrimmed === "괴담 조아" || authorTrimmed === "사장새끼뒤져" || authorTrimmed === "사장새끼 뒤져";
+    const isSpecialDay29 = 
+      authorTrimmed === "출근하기개싫다" || 
+      authorTrimmed === "출근하기 개싫다" || 
+      authorTrimmed === "출근하기존나싫음" || 
+      authorTrimmed === "출근하기 존나싫음" || 
+      authorTrimmed === "괴담조아" || 
+      authorTrimmed === "괴담 조아" || 
+      authorTrimmed === "사장새끼뒤져" || 
+      authorTrimmed === "사장새끼 뒤져" ||
+      authorTrimmed === "팥소금장수" ||
+      authorTrimmed === "오컬트수집가";
     const formattedDate = `${isSpecialDay29 ? "2026. 02. 29." : "2026. 02. 28."} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
     const newReply: Comment = {
@@ -438,6 +533,18 @@ export default function App() {
 
   // Start Comment Edit
   const handleStartEditComment = (id: string, currentContent: string) => {
+    const targetComment = comments.find(c => c.id === id);
+    if (targetComment && (
+      targetComment.isSpectral ||
+      targetComment.author === "출근하기존나싫음" ||
+      targetComment.author === "출근하기 존나싫음" ||
+      targetComment.author === "출근하기개싫다" ||
+      targetComment.author === "출근하기 개싫다" ||
+      targetComment.author === "오컬트수집가" ||
+      targetComment.author === "팥소금장수"
+    )) {
+      return;
+    }
     setEditingCommentId(id);
     setEditingCommentContent(currentContent);
   };
@@ -517,10 +624,13 @@ export default function App() {
           </div>
         );
       }
-      if (trimmed.includes("이미 정해진 목숨") || trimmed.includes("내지는 처지")) {
+      if (trimmed.includes("이미 정해진 목숨") || trimmed.includes("처지")) {
         return (
-          <div key={idx} className="text-center text-xs md:text-sm text-white/50 italic my-1 mb-3">
-            {line}
+          <div key={idx} className="flex flex-col items-center">
+            <div className="text-center text-xs md:text-sm text-white/50 italic my-1">
+              {line}
+            </div>
+            <hr className="border-t border-white/20 w-24 my-3" />
           </div>
         );
       }
@@ -600,8 +710,38 @@ export default function App() {
                 <MessageSquare className="w-2.5 h-2.5 text-white/40" />
                 <span className="whitespace-nowrap">답글</span>
               </button>
-              
 
+              {!comment.isSpectral && 
+               comment.author !== "출근하기존나싫음" && 
+               comment.author !== "출근하기 존나싫음" && 
+               comment.author !== "출근하기개싫다" && 
+               comment.author !== "출근하기 개싫다" && 
+               comment.author !== "오컬트수집가" && 
+               comment.author !== "팥소금장수" && (
+                <>
+                  <button
+                    onClick={() => handleStartEditComment(comment.id, comment.content)}
+                    className="flex items-center gap-1 px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[10px] text-white/60 hover:text-blue-400 hover:border-blue-500/30 transition-colors cursor-pointer"
+                    title="수정"
+                  >
+                    <Edit className="w-2.5 h-2.5 text-white/40" />
+                    <span>수정</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (window.confirm("이 댓글을 삭제하시겠습니까?")) {
+                        handleDeleteComment(comment.id);
+                      }
+                    }}
+                    className="flex items-center gap-1 px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[10px] text-white/60 hover:text-red-400 hover:border-red-500/30 transition-colors cursor-pointer"
+                    title="삭제"
+                  >
+                    <X className="w-2.5 h-2.5 text-white/40" />
+                    <span>삭제</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -726,7 +866,7 @@ export default function App() {
               <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
                 <Skull className={`w-6 h-6 text-red-500 ${glitchActive ? "animate-bounce" : ""}`} />
                 <span className="font-serif tracking-widest text-lg md:text-xl font-bold text-white uppercase glitch-text">
-                  深淵
+                  玄武
                 </span>
                 <span className="text-xs text-white/60 font-mono">
                   [오컬트 · 미스터리 전용 채널]
@@ -809,7 +949,7 @@ export default function App() {
 
                   {/* Post Title & Meta Area */}
                   <div className="p-4 md:p-6 border-b border-white/10 bg-white/5">
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                       <span className="px-2.5 py-0.5 bg-red-500/10 border border-red-500/20 rounded text-[11px] font-medium text-red-400">
                         {post.category}
                       </span>
@@ -1049,7 +1189,7 @@ export default function App() {
                             <div className="relative w-full h-full">
                               <img
                                 src={customAvatar}
-                                alt="신연 일러스트"
+                                alt="현무 일러스트"
                                 referrerPolicy="no-referrer"
                                 className="w-full h-full object-cover rounded-xl"
                               />
@@ -1097,7 +1237,7 @@ export default function App() {
                           onClick={() => setShowSecretName(!showSecretName)}
                           className="w-full border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1 rounded-lg text-[10px] font-serif text-blue-400 tracking-widest mt-2 flex items-center justify-center cursor-pointer transition-all"
                         >
-                          <span>{showSecretName ? "신연(深淵)" : "진명"}</span>
+                          <span>{showSecretName ? "현무(玄武)" : "진명"}</span>
                         </button>
                       </div>
 
@@ -1199,9 +1339,6 @@ export default function App() {
                           [기밀] 성적 데이터베이스
                         </h3>
                       </div>
-                      <span className="text-[10px] bg-red-500/10 border border-red-500/20 text-red-400 px-2 py-1 rounded-lg font-mono">
-                        영적 잠식 위험성 매우 높음
-                      </span>
                     </div>
                     
                     <AnimatePresence mode="wait">
@@ -1327,9 +1464,6 @@ export default function App() {
                           [기밀] 과거사
                         </h3>
                       </div>
-                      <span className="text-[10px] bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2 py-1 rounded-lg font-mono">
-                        영적 잠식 위험성 매우 높음
-                      </span>
                     </div>
 
                     <AnimatePresence mode="wait">
@@ -1372,11 +1506,13 @@ export default function App() {
                           transition={{ duration: 0.35 }}
                           className="p-4 md:p-8 bg-white/5 space-y-4 text-white/80 font-sans leading-relaxed text-xs md:text-sm whitespace-pre-line border-t border-white/5"
                         >
-                          <div className="flex items-center gap-2 border-b border-white/10 pb-2 mb-4">
-                            <div className="px-2 py-0.5 bg-blue-500/10 text-blue-400 font-mono text-[10px] rounded-lg border border-blue-500/20">
-                              DECRYPTED LORE
+                          <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2 mb-4 w-full">
+                            <div className="flex items-center gap-2">
+                              <div className="px-2 py-0.5 bg-blue-500/10 text-blue-400 font-mono text-[10px] rounded-lg border border-blue-500/20">
+                                DECRYPTED LORE
+                              </div>
+                              <span className="font-serif font-bold text-xs text-blue-300">지박령이 된 신(神)과 속박된 그물</span>
                             </div>
-                            <span className="font-serif font-bold text-xs text-blue-300">지박령이 된 신(神)과 속박된 그물</span>
                           </div>
 
                           {isEditingPast ? (
@@ -1418,39 +1554,40 @@ export default function App() {
                 </div>
 
                 {/* Places Column - Right Sidebar (Main Locations Guide) */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 space-y-4">
                   
-                  {/* Sidebar title */}
-                  <div className="frosted-glass p-4 rounded-2xl shadow-xl space-y-4">
-                    <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+                  {/* Unified Places Card */}
+                  <div className="frosted-glass rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+                    {/* Header */}
+                    <div className="p-4 md:p-5 border-b border-white/10 bg-white/5 flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-red-500" />
                       <h3 className="font-serif font-bold text-white text-sm">주요 장소 아카이브 (Locations)</h3>
                     </div>
-                  </div>
 
-                  {/* Location Guides */}
-                  {PLACES_DATA.map((place, idx) => (
-                    <div
-                      key={idx}
-                      className="frosted-glass rounded-2xl overflow-hidden shadow-2xl space-y-3 relative transition-all hover:border-white/20 group"
-                    >
-                      <div className="p-4 md:p-5 space-y-3">
-                        <div>
-                          <h4 className="text-sm md:text-base font-serif font-bold text-white flex items-center gap-1.5">
-                            <span className="text-red-500 font-bold">▶</span>
-                            {place.name}
-                          </h4>
-                          <span className="text-[10px] text-white/40 font-mono block mt-0.5">
-                            위치 : {place.location}
-                          </span>
+                    {/* Places list inside the same container */}
+                    <div className="p-4 md:p-5 space-y-6">
+                      {PLACES_DATA.map((place, idx) => (
+                        <div
+                          key={idx}
+                          className="space-y-3 relative transition-all group"
+                        >
+                          <div>
+                            <h4 className="text-sm md:text-base font-serif font-bold text-white flex items-center gap-1.5">
+                              <span className="text-red-500 font-bold">▶</span>
+                              {place.name}
+                            </h4>
+                            <span className="text-[10px] text-white/40 font-mono block mt-0.5">
+                              위치 : {place.location}
+                            </span>
+                          </div>
+
+                          <p className="text-xs md:text-sm text-white/90 leading-relaxed font-sans border-l-2 border-red-500/40 pl-2.5 break-keep">
+                            {place.description}
+                          </p>
                         </div>
-
-                        <p className="text-xs md:text-sm text-white/90 leading-relaxed font-sans border-l-2 border-red-500/40 pl-2.5 break-keep">
-                          {place.description}
-                        </p>
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
 
                   {/* Deleted original footer sidebar to move upward */}
 
@@ -1465,7 +1602,7 @@ export default function App() {
         {/* Footer */}
         <footer className="border-t border-white/10 mt-12 pt-6 pb-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/40 font-mono relative z-20">
           <div className="text-center md:text-left">
-            <p>© 2026 深淵. ALL SECRETS RECORDED.</p>
+            <p>© 2026 玄武. ALL SECRETS RECORDED.</p>
           </div>
           
           <div className="flex gap-4">
