@@ -34,37 +34,11 @@ export default function App() {
   // Navigation Tabs
   const [activeTab, setActiveTab] = useState<"board" | "archive">("board");
   
-  // Post & Comments state with LocalStorage persistence
-  const [post, setPost] = useState<Post>(() => {
-    const saved = localStorage.getItem("occult_post");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.author === "운명빌라세입자") {
-          parsed.author = "익명";
-        }
-        if (
-          parsed.title.includes("이사") || 
-          parsed.title.includes("남자가 나와") || 
-          parsed.title.includes("남\n자가 나옴") || 
-          parsed.title.includes("[괴담]") ||
-          parsed.title.includes("남자가 나옴") ||
-          !parsed.title.includes("\n")
-        ) {
-          parsed.title = INITIAL_POST.title;
-        }
-        parsed.date = INITIAL_POST.date;
-        return parsed;
-      } catch (e) {
-        return INITIAL_POST;
-      }
-    }
-    return INITIAL_POST;
-  });
+  // Post & Comments state from hardcoded data
+  const [post, setPost] = useState<Post>(INITIAL_POST);
   
   const [comments, setComments] = useState<Comment[]>(() => {
-    const saved = localStorage.getItem("occult_comments");
-    let list: Comment[] = saved ? JSON.parse(saved) : INITIAL_COMMENTS;
+    let list: Comment[] = INITIAL_COMMENTS;
     
     // Migrate authors and dates
     list = list.map(c => {
@@ -259,25 +233,15 @@ export default function App() {
   const [customAvatar, setCustomAvatar] = useState<string | null>(() => {
     return localStorage.getItem("custom_shinyeon_avatar") || null;
   });
-  const [pastLore, setPastLore] = useState(() => {
-    const saved = localStorage.getItem("occult_past_lore");
-    if (saved && saved.includes("운명(運命)")) {
-      return saved;
-    }
-    return CHARACTER_DATA.past;
-  });
+  const [pastLore, setPastLore] = useState(CHARACTER_DATA.past);
   const [isEditingPast, setIsEditingPast] = useState(false);
   const [showSecretName, setShowSecretName] = useState(false);
 
   // Interactive UI effects
   const [glitchActive, setGlitchActive] = useState(false);
   const [screenNoise, setScreenNoise] = useState(false);
-  const [likeCount, setLikeCount] = useState(() => {
-    return Number(localStorage.getItem("post_likes") || post.likes);
-  });
-  const [hasLikedPost, setHasLikedPost] = useState(() => {
-    return localStorage.getItem("has_liked_post") === "true";
-  });
+  const [likeCount, setLikeCount] = useState(INITIAL_POST.likes);
+  const [hasLikedPost, setHasLikedPost] = useState(false);
 
   // Save changes to localStorage when state updates
   useEffect(() => {
