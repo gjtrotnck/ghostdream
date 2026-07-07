@@ -1,0 +1,6 @@
+{
+  "name": "오컬트 인터넷 채널",
+  "description": "오컬트 커뮤니티 컨셉의 게시판으로, 괴담 게시글 편집, 댓글 기능, 그리고 신비로운 등장인물과 장소 정보를 탐색할 수 있습니다.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

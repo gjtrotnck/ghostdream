@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=JetBrains+Mono:wght@400;500;700&family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Noto Sans KR", "Inter", sans-serif;
+  --font-serif: "Nanum Myeongjo", "Cinzel", serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-occult-bg: #020205;
+  --color-occult-card: rgba(255, 255, 255, 0.05);
+  --color-occult-red: #b71c1c;
+  --color-occult-red-hover: #ef4444;
+  --color-occult-blue: #1a237e;
+  --color-occult-teal: #3a86c8;
+}
+
+/* Custom Spooky & Frosted Glass Utilities */
+@layer utilities {
+  .frosted-glass {
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .frosted-glass-hover {
+    transition: all 0.3s ease;
+  }
+  .frosted-glass-hover:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 20px rgba(183, 28, 28, 0.4);
+  }
+  
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(26, 35, 126, 0.4);
+  }
+  
+  .glitch-text {
+    text-shadow: 0 0 4px rgba(183, 28, 28, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-glow-teal {
+    text-shadow: 0 0 8px rgba(58, 134, 200, 0.6);
+  }
+
+  .scanline {
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0) 50%,
+      rgba(0, 0, 0, 0.3) 50%,
+      rgba(0, 0, 0, 0.3)
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    animation: crt-flicker 0.25s infinite;
+  }
+
+  .scanline::after {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
+    z-index: 49;
+    background-size: 100% 3px, 6px 100%;
+    pointer-events: none;
+  }
+
+  .crt-vignette {
+    background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.8) 150%);
+    pointer-events: none;
+    z-index: 48;
+  }
+
+  .crt-rolling {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.04) 10%, transparent 20%);
+    animation: scanline-roll 6s linear infinite;
+    z-index: 47;
+    pointer-events: none;
+  }
+
+  @keyframes crt-flicker {
+    0% { opacity: 0.96; }
+    50% { opacity: 1; }
+    100% { opacity: 0.97; }
+  }
+
+  @keyframes scanline-roll {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+
+  /* Retro CRT Green phosphor or noise distortion when active */
+  .crt-glow {
+    text-shadow: 0 0 6px rgba(239, 68, 68, 0.4), 0 0 1px rgba(255, 255, 255, 0.8);
+  }
+
+  .bg-grid-dots {
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zy4=");
+  }
+}
+
+/* Custom Web Scrollbar for that deep-web/retro vibe */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020205;
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid #020205;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b71c1c;
+}
+
+/* Spooky ambient animation */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.01); }
+}
+
+.ambient-pulse {
+  animation: pulse-slow 8s infinite ease-in-out;
+}
+
+/* Mystical glitch transition */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
