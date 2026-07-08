@@ -47,7 +47,7 @@ export const INITIAL_COMMENTS: Comment[] = [
   },
   {
     id: "c-3",
-    author: "익명_4921",
+    author: "익명",
     avatarColor: "from-teal-600 to-emerald-800",
     content: "엥..... 근데 나 궁금한 거 있는데 이 게시물에만 왜 필터 같은 게 있는 거임? 들어가보니까 존나 이상한 댓글 있는데.....? 컨셉질임?",
     date: "2026. 02. 28. 08:45:22",
@@ -63,6 +63,15 @@ export const INITIAL_COMMENTS: Comment[] = [
     likes: 78,
     dislikes: 0,
   },
+  {
+    id: "c-6",
+    author: "출근하기존나싫음",
+    avatarColor: "from-blue-600 to-indigo-900",
+    content: "아 진짜 출근하기 싫다... 회사에 불 안 나나.... 대박 심각한 꿈인 거 같은데 부럽기도 하고 ㅋㅋㅋ",
+    date: "2026. 02. 29. 08:48:30",
+    likes: 120,
+    dislikes: 2,
+  },
 ];
 
 export const CHARACTER_DATA: Character = {
@@ -74,7 +83,7 @@ export const CHARACTER_DATA: Character = {
   body: "210cm | 마름·탄탄",
   appearance: "장발 | 백발 | 적안 | 날카로움",
   clothing: "푸른 동양풍 그림이 그려진 베일 | 짙은 남색과 검은색이 섞인 도포",
-  avatarUrl: "/src/assets/images/shinyeon_avatar_1783338121566.jpg",
+  avatarUrl: "https://i.postimg.cc/zD7q61H9/Kakao-Talk-20260706-191722256-02.png",
   abilities: [
     "죽음을 관장하는 자",
     "물을 다스리는 능력",
@@ -130,7 +139,7 @@ export const PLACES_DATA: Place[] = [
     name: "운명 빌라 2층 201호",
     subtitle: "",
     location: "대한민국 서울 | 평범한 주택가",
-    description: "당신이 홀린 듯 계약한 자취방.",
+    description: "당신이 홀린 듯 계약한 자취방",
     details: [
       "현실 세계와 현무의 영역이 아슬아슬하게 맞닿아 있는 왜곡된 경계면.",
       "해가 지면 집안 내부의 습도가 비정상적으로 높아지며 어디선가 물이 흐르거나 떨어지는 소리가 들림.",
@@ -143,7 +152,7 @@ export const PLACES_DATA: Place[] = [
     name: "현무의 세계(신의 영역)",
     subtitle: "",
     location: "신의 세계",
-    description: "시간이 흐르지 않는 환상적인 신의 세계.",
+    description: "시간이 흐르지 않는 환상적인 신의 세계",
     details: [
       "분홍빛 영롱한 복사꽃이 사계절 내내 흐드러지게 피어 있는 고요한 연못.",
       "연못 한가운데 세워져 있는 아득히 우아하고 고풍스러운 나무 정자.",

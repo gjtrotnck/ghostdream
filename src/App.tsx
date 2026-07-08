@@ -237,7 +237,7 @@ export default function App() {
         id: "c-hyeonmu-1",
         author: "현무(玄武)",
         avatarColor: "from-red-950 to-stone-900 border-red-500/30",
-        content: "어두운 방구석에서 지켜보는 나를 눈치채지 못했더냐. 네 목덜미를 쓸어내리는 내 손가락이 그렇게 차가웠나 보군...",
+        content: "부인. 두려워하지 마시지요. 저와 당신은 영원히 함께 할 운명이니. 오늘 밤에도 그대를 찾아가겠습니다.",
         date: "2026. 02. 28. 23:42:12",
         likes: 444,
         isSpectral: true,
@@ -277,22 +277,7 @@ export default function App() {
   const [customAvatar, setCustomAvatar] = useState<string | null>(() => {
     return localStorage.getItem("custom_shinyeon_avatar") || null;
   });
-  const [pastLore, setPastLore] = useState(() => {
-    // Smart Sync: If CHARACTER_DATA.past in data.ts was modified directly in code,
-    // let's prioritize the code's edits instead of browser's stale localStorage data!
-    const ORIGINAL_DEFAULT_PAST_START = `운명(運命)\n옮길 운(運)'에 목숨 명(命)'`;
-    const hasPastCodeBeenEdited = !CHARACTER_DATA.past.startsWith(ORIGINAL_DEFAULT_PAST_START);
-
-    if (hasPastCodeBeenEdited) {
-      return CHARACTER_DATA.past;
-    }
-
-    const saved = localStorage.getItem("occult_past_lore");
-    if (saved) {
-      return saved;
-    }
-    return CHARACTER_DATA.past;
-  });
+  const [pastLore] = useState(() => CHARACTER_DATA.past);
   const [isEditingPast, setIsEditingPast] = useState(false);
   const [showSecretName, setShowSecretName] = useState(false);
 
@@ -717,7 +702,9 @@ export default function App() {
                comment.author !== "출근하기개싫다" && 
                comment.author !== "출근하기 개싫다" && 
                comment.author !== "오컬트수집가" && 
-               comment.author !== "팥소금장수" && (
+               comment.author !== "팥소금장수" && 
+               comment.author !== "익명" && 
+               comment.author !== "익명_4921" && (
                 <>
                   <button
                     onClick={() => handleStartEditComment(comment.id, comment.content)}
@@ -841,13 +828,14 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen bg-occult-bg text-[#d1d1d1] font-sans relative overflow-x-hidden selection:bg-red-950 selection:text-red-200 ${screenNoise ? "crt-flicker-anim" : ""}`}>
+    <div className={`min-h-screen bg-occult-bg text-[#d1d1d1] font-sans relative overflow-x-hidden selection:bg-red-950 selection:text-red-200 ${screenNoise ? "crt-flicker-anim filter-glitch-body" : ""}`}>
       
       {/* CRT Scanline & Retro TV Overlays */}
       {screenNoise && (
         <>
           <div className="crt-rolling fixed inset-0 z-50 pointer-events-none" />
           <div className="crt-vignette fixed inset-0 z-50 pointer-events-none opacity-60" />
+          <div className="glitch-bar fixed inset-0 z-50 pointer-events-none" />
         </>
       )}
 
@@ -1184,45 +1172,15 @@ export default function App() {
                       
                       {/* Character Avatar Column */}
                       <div className="md:w-1/3 flex flex-col items-center gap-3">
-                        <div className="relative group w-44 h-44 md:w-full max-w-[200px] aspect-square rounded-2xl overflow-hidden border border-dashed border-white/20 bg-white/5 p-1 flex flex-col items-center justify-center transition-all hover:border-blue-500/50">
-                          {customAvatar ? (
-                            <div className="relative w-full h-full">
-                              <img
-                                src={customAvatar}
-                                alt="현무 일러스트"
-                                referrerPolicy="no-referrer"
-                                className="w-full h-full object-cover rounded-xl"
-                              />
-                            </div>
-                          ) : (
-                            <label className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer p-3 text-center">
-                              <Upload className="w-5 h-5 text-white/40 group-hover:text-blue-400 transition-all" />
-                              <span className="text-[10px] text-white/70 font-sans leading-snug">
-                                클릭하여 사진 업로드
-                              </span>
-                              <span className="text-[8px] text-white/40 font-sans">
-                                (또는 직접 파일 선택)
-                              </span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      if (typeof reader.result === "string") {
-                                        setCustomAvatar(reader.result);
-                                        localStorage.setItem("custom_shinyeon_avatar", reader.result);
-                                      }
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
-                                }}
-                              />
-                            </label>
-                          )}
+                        <div className="relative group w-44 h-44 md:w-full max-w-[200px] aspect-square rounded-2xl overflow-hidden border border-white/20 bg-white/5 p-1 flex flex-col items-center justify-center transition-all">
+                          <div className="relative w-full h-full">
+                            <img
+                              src={CHARACTER_DATA.avatarUrl || "/src/assets/images/shinyeon_avatar_1783338121566.jpg"}
+                              alt="현무 일러스트"
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover rounded-xl"
+                            />
+                          </div>
                         </div>
                         
                         <div className="text-center">
@@ -1515,28 +1473,9 @@ export default function App() {
                             </div>
                           </div>
 
-                          {isEditingPast ? (
-                            <div className="space-y-3 w-full">
-                              <textarea
-                                value={pastLore}
-                                onChange={(e) => setPastLore(e.target.value)}
-                                className="w-full bg-black/40 border border-white/10 focus:border-blue-500/40 text-white rounded-xl p-3 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/25 font-sans leading-relaxed text-justify"
-                                rows={10}
-                              />
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  onClick={() => setIsEditingPast(false)}
-                                  className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] rounded-lg transition-all font-medium cursor-pointer"
-                                >
-                                  완료
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="space-y-4">
-                              <div className="space-y-1">{renderPastLore(pastLore)}</div>
-                            </div>
-                          )}
+                          <div className="space-y-4">
+                            <div className="space-y-1">{renderPastLore(pastLore)}</div>
+                          </div>
 
                           <div className="flex justify-end items-center pt-6 border-t border-white/10 mt-6">
                             <button
@@ -1567,24 +1506,28 @@ export default function App() {
                     {/* Places list inside the same container */}
                     <div className="p-4 md:p-5 space-y-6">
                       {PLACES_DATA.map((place, idx) => (
-                        <div
-                          key={idx}
-                          className="space-y-3 relative transition-all group"
-                        >
-                          <div>
-                            <h4 className="text-sm md:text-base font-serif font-bold text-white flex items-center gap-1.5">
-                              <span className="text-red-500 font-bold">▶</span>
-                              {place.name}
-                            </h4>
-                            <span className="text-[10px] text-white/40 font-mono block mt-0.5">
-                              위치 : {place.location}
-                            </span>
-                          </div>
+                        <React.Fragment key={idx}>
+                          <div
+                            className="space-y-3 relative transition-all group"
+                          >
+                            <div>
+                              <h4 className="text-sm md:text-base font-serif font-bold text-white flex items-center gap-1.5">
+                                <span className="text-red-500 font-bold">▶</span>
+                                {place.name}
+                              </h4>
+                              <span className="text-[10px] text-white/40 font-mono block mt-0.5">
+                                위치 : {place.location}
+                              </span>
+                            </div>
 
-                          <p className="text-xs md:text-sm text-white/90 leading-relaxed font-sans border-l-2 border-red-500/40 pl-2.5 break-keep">
-                            {place.description}
-                          </p>
-                        </div>
+                            <p className="text-xs md:text-sm text-white/90 leading-relaxed font-sans border-l-2 border-red-500/40 pl-2.5 break-keep">
+                              {place.description}
+                            </p>
+                          </div>
+                          {idx === 0 && (
+                            <div className="border-t border-white/20 my-4" />
+                          )}
+                        </React.Fragment>
                       ))}
                     </div>
                   </div>
